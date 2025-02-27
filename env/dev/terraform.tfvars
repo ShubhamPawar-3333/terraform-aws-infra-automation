@@ -1,1 +1,1 @@
-key_name = "bastion-key"  # Replace with your key pair name
+key_name = "bastion-key" # Replace with your key pair name
