@@ -71,4 +71,4 @@ terraform-aws-infra/
 - [x] Create Bastion module for EC2 instance.
 - [x] Set up multi-environment configs (dev, staging, prod) - dev complete.
 - [x] Configure GitHub Actions for automation across environments - dev automated.
-- [ ] Next: Extend to staging/prod and cleanup.
+- [ ] Next: Extend to staging/prod and cleanup
