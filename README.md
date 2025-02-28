@@ -61,7 +61,7 @@ cd terraform-aws-infra
 - Create an S3 bucket (`my-terraform-state-bucket`) and DynamoDB table (`terraform-locks`) in `us-east-1`.
 - Update `env/dev/terraform.tfvars` with your settings:
 ```hcl
-aws_region         = "us-east-1"
+aws_region         = "ap-south-1"
 vpc_cidr           = "10.0.0.0/16"
 public_subnet_cidr = "10.0.1.0/24"
 private_subnet_cidr = "10.0.2.0/24"
