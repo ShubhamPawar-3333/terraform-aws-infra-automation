@@ -1,74 +1,113 @@
-# Terraform AWS Infrastructure Hands-On
+# Terraform AWS Multi-Environment Infrastructure
 
-This project provisions a multi-environment AWS infrastructure (VPC, subnets, NAT Gateway, Bastion host) using Terraform, automated with GitHub Actions, duplicating a real-world setup, and tears it down after testing.
+This project automates the provisioning and management of a scalable AWS infrastructure across `dev`, `staging`, and `prod` environments using **Terraform** for Infrastructure as Code (IaC) and **GitHub Actions** for CI/CD automation. It features a VPC, public/private subnets, a Bastion Host for secure access, and state management, designed to demonstrate DevOps best practices while maintaining cost-efficiency (~₹10-12 for a 2-hour run).
 
-## Prerequisites
-- AWS account with IAM credentials (Access Key and Secret Key).
-- Terraform installed locally.
-- GitHub repository for CI/CD.
+---
 
-## Final Project Structure
-```text
-terraform-aws-infra/
-├── .github/
-│   └── workflows/
-│       └── terraform.yml       # GitHub Actions workflow for CI/CD across envs
-├── modules/
-│   ├── vpc/                   # VPC and networking module
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── outputs.tf
-│   └── bastion/               # Bastion host module
-│       ├── main.tf
-│       ├── variables.tf
-│       └── outputs.tf
-├── env/
-│   ├── dev/                   # Dev environment config
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── terraform.tfvars
-│   ├── staging/               # Staging environment config
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── terraform.tfvars
-│   └── prod/                  # Prod environment config
-│       ├── main.tf
-│       ├── variables.tf
-│       └── terraform.tfvars
-├── main.tf                    # Root config (S3 backend, provider)
-├── variables.tf               # Global variables
-├── outputs.tf                 # Global outputs
-├── provider.tf                # AWS provider config
-├── .gitignore                 # Ignored files
-└── README.md                  # Project documentation
+## Tech Stack
+- **Terraform**: For provisioning and managing AWS infrastructure.
+- **GitHub Actions**: For automating CI/CD pipelines (currently inactive, steps commented out for safety).
+- **AWS Services**: VPC, EC2 (Bastion Host), Subnets, Internet Gateway, NAT Gateway, S3 (state backend), DynamoDB (state locking), IAM (policies/secrets).
+- **Shell Scripts**: Optional for custom configurations (e.g., Bastion setup).
+
+---
+
+## Architecture Diagram
+![AWS Infrastructure Diagram](docs/terraform-aws-infra-automation.png)  
+A visual representation of the VPC, subnets, Bastion Host, and traffic flows is included to illustrate the multi-environment setup.
+
+---
+
+## Environments
+- **Dev, Staging, Production**: Each environment is isolated with its own VPC, using unique CIDR blocks (e.g., `10.0.0.0/16` for `dev`, `10.1.0.0/16` for `staging`, `10.2.0.0/16` for `prod`) to prevent overlap and ensure scalability.
+- **Structure**: Configured in `env/dev/`, `env/staging/`, and `env/prod/` directories, calling reusable Terraform modules for consistency and isolation.
+
+---
+
+## CI/CD Workflow
+The GitHub Actions pipeline (defined in `.github/workflows/terraform.yml`, but with Terraform steps currently commented out for safety) automates infrastructure management:
+- **Trigger**: Push or pull request to `main`.
+- **Steps** (Commented Out for Safety):
+  1. Checkout code.
+  2. Set up Terraform (v1.5.0).
+  3. Run `terraform init` (commented out).
+  4. Validate code with `terraform fmt -check` (commented out).
+  5. Generate a plan with `terraform plan` (commented out).
+  6. Apply changes for `dev` only (commented out, manual approval for `staging`/`prod` suggested).
+- **Matrix**: Supports `dev`, `staging`, `prod` environments concurrently.
+- **Note**: The workflow can be reactivated by uncommenting the steps when needed for testing or demonstration.
+
+---
+
+## Infrastructure as Code (IaC)
+- **Terraform Modules**: Reusable `vpc` and `bastion` modules in `modules/` for VPC, subnets, gateways, and Bastion Host, promoting DRY (Don’t Repeat Yourself) principles.
+- **State Management**: Uses an S3 bucket (`my-terraform-state-bucket`) and DynamoDB table (`terraform-locks`) for secure, collaborative state storage and locking.
+- **Best Practices**: Version constraints (`required_providers`), modular design, variable validation, and clear documentation.
+
+---
+
+## How to Replicate
+Follow these steps to set up and test the `dev` environment locally:
+
+### 1. Clone the repository:
+```bash
+git clone https://github.com/<your-username>/terraform-aws-infra.git
+cd terraform-aws-infra
 ```
 
-## Steps to Build
-1. Set up root files and folder structure.
-2. Configure AWS provider and S3 backend.
-3. Create VPC module with subnets and NAT Gateway.
-4. Create Bastion module for EC2 instance.
-5. Set up multi-environment configs (dev, staging, prod).
-6. Configure GitHub Actions for automation across environments.
-7. Test creation and deletion (focus on dev for hands-on).
+### 2. Configure your environment:
+- Install Terraform (v1.5.0+).
+- Configure AWS CLI: `aws configure` with your IAM credentials.
+- Create an S3 bucket (`my-terraform-state-bucket`) and DynamoDB table (`terraform-locks`) in `us-east-1`.
+- Update `env/dev/terraform.tfvars` with your settings:
+```hcl
+aws_region         = "us-east-1"
+vpc_cidr           = "10.0.0.0/16"
+public_subnet_cidr = "10.0.1.0/24"
+private_subnet_cidr = "10.0.2.0/24"
+key_name           = "bastion-key"  # Your AWS SSH key pair
+```
+### 3. Initialize and deploy:
+```bash
+cd env/dev
+terraform init
+terraform plan
+terraform apply
+```
+### 4. Test the Bastion Host:
+- SSH into the Bastion: `ssh -i bastion-key.pem ec2-user@<bastion-public-ip>` (replace with the IP from `terraform apply` output).
 
-## Setup Instructions
-1. **AWS Credentials**: Configure AWS CLI with `aws configure` or set environment variables.
-2. **S3 Backend**: Create an S3 bucket (`my-terraform-state-bucket`) and DynamoDB table (`terraform-locks`) in `us-east-1`.
-3. **Terraform Config**: Provider and backend are set in `provider.tf` and `main.tf`.
-4. **Initialize**: Run `terraform init` to set up the backend and provider.
-5. **VPC Module**: Defined in `modules/vpc/` with VPC, public/private subnets, IGW, NAT Gateway, and route tables.
-6. **Bastion Module**: Defined in `modules/bastion/` with an EC2 instance in the public subnet for SSH access.
-7. **Dev Environment**: Configured in `env/dev/` to call VPC and Bastion modules with dev-specific settings.
-8. **Test Bastion**: SSH into the Bastion with `ssh -i bastion-key.pem ec2-user@<public-ip>`.
-9. **GitHub Actions**: Workflow in `.github/workflows/terraform.yml` automates Terraform for dev.
+### 4. Clean up to avoid costs:
+```bash
+terraform destroy
+```
+Verify no AWS resources remain in the console.
 
-## Progress
-- [x] Define project structure with multi-environment support.
-- [x] Create root files and folder structure.
-- [x] Configure AWS provider and S3 backend.
-- [x] Create VPC module with subnets and NAT Gateway.
-- [x] Create Bastion module for EC2 instance.
-- [x] Set up multi-environment configs (dev, staging, prod) - dev complete.
-- [x] Configure GitHub Actions for automation across environments - dev automated.
-- [ ] Next: Extend to staging/prod and cleanup
+## Security & Compliance:
+- **IAM Policies**: Used AWS credentials as a service account for Terraform/GitHub Actions, with least-privilege principles (e.g., limited to VPC, EC2, S3, DynamoDB).
+- **Secrets Management**: Stored AWS credentials in GitHub Secrets for secure CI/CD (when active).
+- **Security Measures**: Bastion Host in public subnet with SSH-only access (port 22), private subnet isolation via NAT Gateway, and S3/DynamoDB encryption for state.
+
+
+## Best Practices Implemented
+- **DRY**: Reusable Terraform modules reduce code duplication.
+- **Linting & Validation**: terraform fmt -check and terraform validate ensure code quality (historically part of the workflow).
+- **Efficiency**: Quick deploy/destroy cycles minimize costs (~₹10-12/2hrs).
+- **Documentation**: Clear README.md, modular structure, and diagram for transparency.
+
+## Potential Improvements
+- **Reactivate Workflow**: Uncomment GitHub Actions steps for testing, adding approval gates for staging/prod.
+- **Separate Branches**: Use dev-branch, staging-branch, prod-branch for environment-specific deployments.
+- **Monitoring**: Integrate AWS CloudWatch for resource metrics and alerts.
+- **Scalability**: Add auto-scaling groups or load balancers for production-grade infra.
+
+
+---
+
+### Notes
+- **Placeholder**: Replace `<your-username>` with your GitHub username.
+- **Diagram**: Assumes `docs/terraform-aws-infra-automation.png` exists (from our Draw.io work). Ensure it’s in your repo and linked correctly.
+- **Workflow Status**: Reflects that `.github/workflows/terraform.yml` exists but has Terraform steps commented out, maintaining historical accuracy for your portfolio.
+- **Conciseness**: Kept under 200 lines, focused on key points, and formatted with Markdown (headings, bullets, code blocks).
+
+---
