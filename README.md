@@ -13,7 +13,11 @@ This project automates the provisioning and management of a scalable AWS infrast
 ---
 
 ## Architecture Diagram
+<<<<<<< HEAD
 ![AWS Infrastructure Diagram](project-diagram/Terraform-AWS-Infra-Setup.png)  
+=======
+![AWS Infrastructure Diagram](doc/terraform-aws-infra-automation.png)  
+>>>>>>> 3dc8f02e483c02445add294addd76014eb95513e
 A visual representation of the VPC, subnets, Bastion Host, and traffic flows is included to illustrate the multi-environment setup.
 
 ---
